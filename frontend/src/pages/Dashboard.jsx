@@ -13,14 +13,19 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
 } from "../components/ui/dropdown-menu";
 import {
   Cloud,
   User as UserIcon,
   MapPin,
   Thermometer,
+  Eraser,
   Sun,
   Moon,
+  Menu,
+  Home,
   Heart,
   Settings,
   LogOut,
@@ -122,6 +127,18 @@ const dayLabelFrom = (d, index) => {
     { weekday: "long" }
   );
 };
+
+ // ask auth to guard favorites on this page too
+ const handleToggleFavoriteAuth = () => {
+   if (!user) {
+     navigate("/dashboard", {
+       state: { authMessage: `Login or register to manage favorites for ${selectedCity}.` },
+     });
+     return;
+   }
+   persistAfterToggleFavorite(selectedCity);
+ };
+
 /* -------------------------------------------------------------------- */
 
 export default function Dashboard() {
@@ -182,7 +199,6 @@ export default function Dashboard() {
   );
 
   const displayName = useMemo(() => {
-    if (user?.fullName) return user.fullName;
     if (user?.username) return user.username;
     if (user?.email) return String(user.email).split("@")[0];
     return "Guest";
@@ -263,93 +279,132 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-sky-400 via-blue-500 to-indigo-600">
-      <main className="container mx-auto px-4 py-8 space-y-8">
-        {/* Header / Navbar with User Profile */}
-        <div className="glass-effect rounded-2xl p-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex items-center space-x-4">
-              <div className="p-3 rounded-full bg-primary/20 backdrop-blur-sm">
-                <Cloud className="h-8 w-8 text-white" />
+      {/* Header / Navbar with User Profile */}
+      <div className="glass-effect sticky top-0 z-50 pt-[env(safe-area-inset-top)]">
+        <div className="container mx-auto px-4 py-3">
+         <div className="flex items-center justify-between gap-2">
+            {/* Logo */}
+            <button
+              onClick={() => navigate("/")}
+              className="flex items-center space-x-2 shrink-0"
+              aria-label="Go to Home"
+            >
+              <div className="p-2 rounded-xl bg-primary/10 backdrop-blur-sm">
+                <Cloud className="h-6 w-6 text-primary" />
               </div>
-              <div>
-                <h1 className="text-2xl font-bold text-white">
-                  MyWeather Dashboard
-                </h1>
-                <nav className="flex space-x-4 mt-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-white/80 hover:text-white hover:bg-white/10"
-                    onClick={() =>
-                      // fetchWeather(state.city || state?.data?.city || "Hamburg")
-                      navigate("/")
-                    }
-                  >
-                    Home
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-white/80 hover:text-white hover:bg-white/10"
-                    onClick={useMyLocation}
-                  >
-                    My Location
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-white/80 hover:text-white hover:bg-white/10"
-                    onClick={() => clearRecent()}
-                  >
-                    Clear Recent
-                  </Button>
-                </nav>
-              </div>
-            </div>
+              <h1 className="text-base sm:text-xl font-bold text-foreground">
+                MyWeather Dashboard
+              </h1>
+            </button>
 
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className="flex items-center space-x-2 text-white hover:bg-white/10"
-                >
-                  <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
-                    <UserIcon className="h-4 w-4" />
-                  </div>
-                  <span className="hidden sm:block">{displayName}</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                align="end"
-                className="bg-white dark:bg-gray-800 text-foreground"
+            {/* Desktop Nav (md+) */}
+            <nav className="hidden md:flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-foreground hover:bg-muted"
+                onClick={() => navigate("/")}
               >
-                <DropdownMenuItem onClick={toggleTheme}>
-                  <Settings className="mr-2 h-4 w-4" />
-                  Toggle Theme
-                </DropdownMenuItem>
-                {user ? (
-                  <DropdownMenuItem onClick={logout}>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Logout
+                Home
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-foreground hover:bg-muted"
+                onClick={useMyLocation}
+              >
+                My Location
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-foreground hover:bg-muted"
+                onClick={clearRecent}
+              >
+                Clear Recent
+              </Button>
+            </nav>
+
+            {/* Right side: User + Menu */}
+            <div className="flex items-center gap-1 sm:gap-2">
+              {/* {user && (
+                <div className="flex items-center gap-2 min-w-0">
+                  <div className="w-8 h-8 rounded-full bg-primary/15 flex items-center justify-center">
+                    <UserIcon className="h-4 w-4 text-foreground/80" />
+                  </div>
+                  <span className="text-sm text-foreground truncate max-w-[90px] xs:max-w-[120px] sm:max-w-[160px]">
+                    {displayName}
+                  </span>
+                </div>
+              )} */}
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-foreground hover:bg-muted px-3 h-9"
+                    aria-label="Open Menu"
+                  >
+                    <Menu className="h-6 w-6 sm:h-7 sm:w-7" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="min-w-[220px]">
+                  <DropdownMenuLabel className="truncate">
+                    {user ? displayName : "Welcome — Quick Menu"}
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+
+                  {/* Collapsed nav items for small screens */}
+                  <div className="md:hidden">
+                    <DropdownMenuItem onClick={() => navigate("/")}>
+                      <Home className="mr-2 h-4 w-4" />
+                      Home
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={useMyLocation}>
+                      <MapPin className="mr-2 h-4 w-4" />
+                      My Location
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={clearRecent}>
+                      <Eraser className="mr-2 h-4 w-4" />
+                      Clear Recent
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </div>
+
+                  <DropdownMenuItem onClick={toggleTheme}>
+                    <Settings className="mr-2 h-4 w-4" />
+                    Toggle Theme
                   </DropdownMenuItem>
-                ) : null}
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  {user && (
+                    <DropdownMenuItem
+                      onClick={logout}
+                      className="text-destructive focus:text-destructive"
+                    >
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Logout
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
         </div>
+      </div>
 
+      <main className="container mx-auto px-3 sm:px-4 space-y-6 sm:space-y-8">
         {/* Welcome / User Info Section */}
         <div className="weather-card">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
             <div>
               <h2 className="text-2xl font-bold text-foreground mb-2">
-                Welcome back, {displayName}! 👋
+                Welcome back, {displayName}!
               </h2>
               <p className="text-muted-foreground">
                 Here's your weather dashboard overview
               </p>
             </div>
-            <div className="flex flex-wrap gap-4">
+            <div className="flex flex-wrap gap-3 sm:gap-4">
               <div className="flex items-center space-x-2 text-sm">
                 <Heart className="h-4 w-4 text-primary" />
                 <span>{state.favorites?.length || 0} favorites</span>
@@ -366,7 +421,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
           {/* Favorites Weather Section */}
           <div className="lg:col-span-2 space-y-6">
             <Card className="weather-card">
@@ -383,7 +438,7 @@ export default function Dashboard() {
                     favorites”.
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     {state.favorites.map((name) => {
                       const selected =
                         selectedCity &&
@@ -411,7 +466,7 @@ export default function Dashboard() {
                       return (
                         <div
                           key={name}
-                          className={`forecast-card cursor-pointer ${
+                          className={`forecast-card cursor-pointer active:scale-[0.995] transition-transform ${
                             selected ? "ring-2 ring-primary" : ""
                           }`}
                           onClick={() => fetchWeather(name)}
@@ -483,37 +538,33 @@ export default function Dashboard() {
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   <span>Detailed Forecast — {selectedCity}</span>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-col xs:flex-row items-stretch xs:items-center gap-2">
                     {!isFavorite(selectedCity) ? (
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => persistAfterToggleFavorite(selectedCity)}
-                      >
+                        className="h-8 px-3"
+                        onClick={handleToggleFavoriteAuth}>
+                      
                         <Star className="h-4 w-4 mr-2" />
                         Add to Favorites
                       </Button>
                     ) : (
                       <Button
                         size="sm"
-                        variant="outline"
-                        onClick={() => persistAfterToggleFavorite(selectedCity)}
-                      >
+                          variant="outline"
+                          className="h-8 px-3"
+                           onClick={handleToggleFavoriteAuth}>
+                      
                         <Star className="h-4 w-4 mr-2" />
                         Remove Favorite
                       </Button>
                     )}
+
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => persistAfterToggleFavorite(selectedCity)}
-                    >
-                      <Star className="h-4 w-4 mr-2" />
-                      Remove Favorite
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
+                      className="h-8 px-3"
                       onClick={() => {
                         const name = (
                           state.city ||
@@ -533,7 +584,7 @@ export default function Dashboard() {
               </CardHeader>
               <CardContent className="space-y-6">
                 {/* Current Summary */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
                   <div className="p-3 rounded-lg bg-muted/50">
                     <div className="text-sm text-muted-foreground">
                       Temperature
@@ -599,7 +650,7 @@ export default function Dashboard() {
                       ))}
                     </div>
                   ) : hourly.length ? (
-                    <div className="flex space-x-4 overflow-x-auto pb-2">
+                    <div className="flex space-x-3 sm:space-x-4 overflow-x-auto pb-2 touch-pan-x overscroll-x-contain">
                       {hourly.map((h, idx) => {
                         const hTemp = pickNum(
                           h.temp,
@@ -722,7 +773,7 @@ export default function Dashboard() {
                       ))}
                     </div>
                   ) : daily.length ? (
-                    <div className="space-y-2">
+                    <div className="space-y-1.5 sm:space-y-2">
                       {daily.slice(0, 5).map((d, index) => {
                         const hi = pickNum(
                           d.high,

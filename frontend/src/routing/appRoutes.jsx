@@ -1,11 +1,13 @@
 import { Routes, Route } from "react-router-dom";
 import Home from "../pages/Home";
 import Dashboard from "../pages/Dashboard";
+import About from "../pages/About"
 import ProtectedRoute from "./ProtectedRoute";
 
 const appRoutes = () => (
    <Routes>
-      <Route path="/" element={<Home />} />
+    <Route path="/" element={<Home />} />
+       <Route path="/about" element={<About />} /> 
       <Route
         path="/dashboard"
         element={
