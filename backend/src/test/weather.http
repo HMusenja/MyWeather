@@ -1,0 +1,35 @@
+### Berlin
+GET http://localhost:5000/api/weather/berlin
+
+### New York (note: encode space)
+GET http://localhost:5000/api/weather/New%20York
+
+### São Paulo (unicode / diacritics)
+GET http://localhost:5000/api/weather/São%20Paulo
+
+### Non-existent city -> expect 404
+GET http://localhost:5000/api/weather/this-city-does-not-exist-xyz
+
+### Hamburg (repeat twice to test cache)
+GET http://localhost:5000/api/weather/hamburg
+
+GET http://localhost:5000/api/weather/hamburg
+
+
+### Valid city
+GET http://localhost:5000/api/weather/berlin
+
+### Not found city
+GET http://localhost:5000/api/weather/this-city-does-not-exist-xyz
+
+### Bad input
+GET http://localhost:5000/api/weather/123$$$
+
+###
+GET http://localhost:5000/api/inline-ping
+
+###
+GET http://localhost:5000/api/ping
+
+####
+GET http://localhost:5000/api/alerts/coords?lat=52.52&lon=13.41&lang=en

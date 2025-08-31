@@ -1,0 +1,91 @@
+@baseUrl = http://localhost:5000
+@email = user@mail.com
+@username = Test_user
+@password = 1234
+
+### 🆕 Register New User
+POST {{baseUrl}}/api/users/register
+Content-Type: application/json
+Accept: application/json
+
+{
+  "fullName": "Test user",
+  "email": "{{email}}",
+  "username": "{{username}}",
+  "password": "{{password}}"
+}
+
+### 🔐 Login (email) — cookie is stored automatically by REST Client
+POST {{baseUrl}}/api/users/login
+Content-Type: application/json
+Accept: application/json
+
+{
+  "email": "{{email}}",
+  "password": "{{password}}"
+}
+
+### 👤 Get Current User (should be 200 after login)
+GET {{baseUrl}}/api/users/me
+Accept: application/json
+
+### 📖 Get Weather Prefs (should be 200)
+GET {{baseUrl}}/api/prefs/weather
+Accept: application/json
+
+### ✏️ Update Weather Prefs (valid → 200)
+PATCH {{baseUrl}}/api/prefs/weather
+Content-Type: application/json
+Accept: application/json
+
+{
+  "units": "imperial",
+  "theme": "light",
+  "favorites": ["Hamburg", "Berlin", "Tokyo"],
+  "defaultCity": "Hamburg"
+}
+
+### ❌ Update Weather Prefs (invalid → 400 with globalErrorHandler JSON)
+PATCH {{baseUrl}}/api/prefs/weather
+Content-Type: application/json
+Accept: application/json
+
+{
+  "units": "kelvin",
+  "favorites": "Hamburg"
+}
+
+### 🚪 Logout User
+POST {{baseUrl}}/api/users/logout
+Accept: application/json
+
+### 🚫 Get Current User after logout (should be 401)
+GET {{baseUrl}}/api/users/me
+Accept: application/json
+
+### 🚫 Get Weather Prefs after logout (should be 401)
+GET {{baseUrl}}/api/prefs/weather
+Accept: application/json
+
+### 🔐 Login (username)
+POST {{baseUrl}}/api/users/login
+Content-Type: application/json
+Accept: application/json
+
+{
+  "username": "{{username}}",
+  "password": "{{password}}"
+}
+
+### 🔎 Sanity: route not found (should be 404 via routeNotFound)
+GET {{baseUrl}}/nope/this-route-does-not-exist
+Accept: application/json
+
+# -------------------------------------------------------------------
+# OPTIONAL: If you really want to test with a manual cookie instead of the jar,
+# uncomment the block below and paste a fresh "token=..." cookie value.
+# -------------------------------------------------------------------
+##
+GET {{baseUrl}}/api/users/me
+Accept: application/json
+Cookie: token=PASTE_YOUR_JWT_COOKIE_HERE

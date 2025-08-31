@@ -1,0 +1,135 @@
+@baseUrl = http://localhost:5000
+@email = user@mail.com
+@username = Test_user
+@password = 1234
+
+############### AUTH BOOTSTRAP ###############
+
+### 🔐 Login (email) — cookie stored by REST Client
+POST {{baseUrl}}/api/users/login
+Content-Type: application/json
+Accept: application/json
+
+{
+  "email": "{{email}}",
+  "password": "{{password}}"
+}
+
+### 👤 Me (should be 200 after login)
+GET {{baseUrl}}/api/users/me
+Accept: application/json
+
+
+############### PREFS: READ ###############
+
+### 📖 Get Weather Prefs (200)
+GET {{baseUrl}}/api/prefs/weather
+Accept: application/json
+
+
+############### PREFS: HAPPY PATH UPDATES ###############
+
+### ✏️ Update all prefs (200)
+PATCH {{baseUrl}}/api/prefs/weather
+Content-Type: application/json
+Accept: application/json
+
+{
+  "units": "imperial",
+  "theme": "light",
+  "favorites": ["Hamburg", "Berlin", "Tokyo"],
+  "defaultCity": "Hamburg"
+}
+
+### 🔄 Verify persisted prefs (200; check body)
+GET {{baseUrl}}/api/prefs/weather
+Accept: application/json
+
+### ✏️ Partial update: only units (200)
+PATCH {{baseUrl}}/api/prefs/weather
+Content-Type: application/json
+Accept: application/json
+
+{
+  "units": "metric"
+}
+
+### 🔄 Verify units toggled (200; check body.units === "metric")
+GET {{baseUrl}}/api/prefs/weather
+Accept: application/json
+
+### ✏️ Favorites: de-dup, trim, and cap to 20 (200)
+# Controller sanitizes duplicates/spaces and clamps to 20.
+PATCH {{baseUrl}}/api/prefs/weather
+Content-Type: application/json
+Accept: application/json
+
+{
+  "favorites": [
+    " Hamburg ", "hamburg", "Berlin", "Munich", "Cologne", "Frankfurt",
+    "Stuttgart","Düsseldorf","Dortmund","Essen","Leipzig","Bremen",
+    "Dresden","Hanover","Nuremberg","Duisburg","Bochum","Wuppertal",
+    "Bielefeld","Bonn","Münster","Karlsruhe","Augsburg","Wiesbaden","Gelsenkirchen"
+  ]
+}
+
+### 🔄 Verify favorites sanitized (<=20, no dupes, trimmed)
+GET {{baseUrl}}/api/prefs/weather
+Accept: application/json
+
+
+############### PREFS: VALIDATION / ERROR CASES ###############
+
+### ❌ Invalid units (400; globalErrorHandler should include message/details)
+PATCH {{baseUrl}}/api/prefs/weather
+Content-Type: application/json
+Accept: application/json
+
+{
+  "units": "kelvin"
+}
+
+### ❌ Invalid favorites type (400)
+PATCH {{baseUrl}}/api/prefs/weather
+Content-Type: application/json
+Accept: application/json
+
+{
+  "favorites": "Hamburg"
+}
+
+### ❌ Invalid defaultCity type (400)
+PATCH {{baseUrl}}/api/prefs/weather
+Content-Type: application/json
+Accept: application/json
+
+{
+  "defaultCity": 123
+}
+
+### ❌ Empty update (400: "No updatable fields provided")
+PATCH {{baseUrl}}/api/prefs/weather
+Content-Type: application/json
+Accept: application/json
+
+{}
+
+
+############### AUTHZ CHECKS ###############
+
+### 🚪 Logout (expects 200)
+POST {{baseUrl}}/api/users/logout
+Accept: application/json
+
+### 🚫 Unauthorized: Get prefs (401)
+GET {{baseUrl}}/api/prefs/weather
+Accept: application/json
+
+### 🚫 Unauthorized: Update prefs (401)
+PATCH {{baseUrl}}/api/prefs/weather
+Content-Type: application/json
+Accept: application/json
+
+{
+  "units": "metric"
+}
